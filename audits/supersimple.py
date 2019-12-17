@@ -5,6 +5,8 @@ from audits.audit import RiskLimitingAudit
 class SuperSimple(RiskLimitingAudit):
 
     def __init__(self, risk_limit):
+        self.l = 0.5
+        self.gamma = 1.1
         super().__init__(risk_limit)
 
 
@@ -89,30 +91,38 @@ class SuperSimple(RiskLimitingAudit):
                     }
         """
 
-        # TODO Do we want to fix these values?
-        gamma = 1.1
-        l = 0.5 
-
-        rho = -math.log(self.risk_limit)/((1/(2*gamma)) + l*math.log(1 - 1/(2*gamma))) 
+        rho = -math.log(self.risk_limit)/((1/(2*self.gamma)) + self.l*math.log(1 - 1/(2*self.gamma))) 
 
         diluted_margin = self.compute_diluted_margin(contests, margins, total_ballots)
 
         return math.ceil(rho/diluted_margin) 
 
-    def compute_risk(self, contests, margins, reported_results, sample_results):
+    def compute_risk(self, contests, margins, cvrs, sample_cvr):
         """
         Computes the risk-value of <sample_results> based on results in <contest>.
 
         Inputs: 
             contests       - the contests and results being audited
             margins        - the margins for the contest being audited
-            reported_results - mapping of candidates to reported votes
-            sample_results - mapping of candidates to votes in the (cumulative)
-                             sample:
-
+            cvrs           - mapping of ballot_id to votes:
                     {
-                        candidate1: sampled_votes,
-                        candidate2: sampled_votes,
+                        'ballot_id': {
+                            'contest': {
+                                'candidate1': 1,
+                                'candidate2': 0,
+                                ...
+                            }
+                        ...
+                    }
+
+            sample_cvr - the CVR of the audited ballot  
+                    {
+                        'ballot_id': {
+                            'contest': {
+                                'candidate1': 1,
+                                'candidate2': 0,
+                                ...
+                            }
                         ...
                     }
 
@@ -125,18 +135,40 @@ class SuperSimple(RiskLimitingAudit):
         p = 1
 
 
-        U = self.compute_U(contests, margins, reported_results)
+        diluted_margin = self.compute_diluted_margin(contests, margins, len(cvrs))
+        V = diluted_margin*len(cvrs)
 
-        for ctr,batch in enumerate(sample_results):
-            e_p = self.compute_error(contests, margins, reported_results[batch], sample_results[batch])
-            u_p = self.compute_max_error(contests, margins, reported_results[batch])
+        U = 2*self.gamma/diluted_margin
 
-            taint = e_p/u_p
-            print(taint, ctr)
+        lowest_p = 1
+        result = False
+        for ballot in sample_cvr:
+            e_r = 0
 
-            p *= (1 - 1/U)/(1 - taint)
+            for contest in contests:
+                if contest not in sample_cvr[ballot]:
+                    # TODO I think this is right
+                    continue
+                for winner in margins[contest]['winners']:
+                    for loser in margins[contest]['losers']:
+                        v_w = cvrs[ballot][contest][winner]
+                        a_w = sample_cvr[ballot][contest][winner]
+
+                        v_l = cvrs[ballot][contest][loser]
+                        a_l = sample_cvr[ballot][contest][loser]
+
+                        V_wl = contests[contest][winner] - contests[contest][loser]
+
+                        e = ((v_w - a_w) - (v_l - a_l))/V_wl
+                        if e > e_r:
+                            e_r = e
+
+            p *= (1 - 1/U)/(1 - (e_r/(2*self.gamma*V)))
+
+            if p < lowest_p:
+                lowest_p = p
 
             if p < self.risk_limit:
-               return p, True
+                result = True
 
-        return p, p < self.risk_limit
+        return lowest_p, result 
