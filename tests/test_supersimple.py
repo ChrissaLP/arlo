@@ -8,7 +8,7 @@ from sampler import Sampler
 def sampler():
     seed = '12345678901234567890abcdefghijklmnopqrstuvwxyz😊'
 
-    risk_limit = .25
+    risk_limit = .1
     contests = {
         'Contest A': {
             'winner': 60000,
@@ -43,7 +43,7 @@ def sampler():
     }
 
 
-    yield Sampler('SuperSimple', seed, risk_limit, contests, cvrs={'test': None})
+    yield Sampler('SuperSimple', seed, risk_limit, contests, cvrs=[1]*100001)
 
 
 def test_compute_diluted_margin(sampler):
@@ -53,4 +53,10 @@ def test_compute_diluted_margin(sampler):
 
     assert computed == expected, 'Diluted margin computation incorrect: got {}, expected {}'.format(computed, expected)
 
+def test_get_sample_sizes(sampler):
+
+    computed = sampler.get_sample_sizes(None)
+    expected = 761 # From Stark, though his paper has rounding errors so we add 1. 
+
+    assert computed == expected, 'Sample size computation incorrect: got {}, expected {}'.format(computed, expected)
 

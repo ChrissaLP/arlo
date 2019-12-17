@@ -96,7 +96,8 @@ class SuperSimple(RiskLimitingAudit):
         rho = -math.log(self.risk_limit)/((1/(2*gamma)) + l*math.log(1 - 1/(2*gamma))) 
 
         diluted_margin = self.compute_diluted_margin(contests, margins, total_ballots)
-        return math.ceil(rho*diluted_margin) 
+
+        return math.ceil(rho/diluted_margin) 
 
     def compute_risk(self, contests, margins, reported_results, sample_results):
         """
