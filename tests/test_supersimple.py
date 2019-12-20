@@ -165,43 +165,120 @@ def test_compute_risk(sampler):
     delta = 0.0005 # Stark's math was roughly rounded? So deal with it
 
     assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(computed, bound)
+    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(computed)
     assert finished, 'Audit should have finished but didn\'t'
 
     # Test one-vote overstatement 
-    sample_cvr[0]['Contest D'] = {
-        'winner': 0,
-        'loser': 0
+    sample_cvr[0] = {
+            'Contest A': {
+                'winner': 0,
+                'loser': 0
+            },
+            'Contest B': {
+                'winner': 0,
+                'loser': 0
+            },
+            'Contest C': {
+                'winner': 0,
+                'loser': 0
+            },
+            'Contest D': {
+                'winner': 0,
+                'loser': 0
+            },
+            'Contest E': {
+                'winner': 0,
+                'loser': 0
+            },
     }
 
     bound = 0.019
     computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs, sample_cvr)
     assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(computed, bound)
+    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(computed)
     assert finished, 'Audit should have finished but didn\'t'
-
-
+    
     # Test two-vote overstatement 
-    sample_cvr[0]['Contest D'] = {
-        'winner': 0,
-        'loser': 1
+    sample_cvr[0] = {
+            'Contest A': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest B': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest C': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest D': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest E': {
+                'winner': 0,
+                'loser': 1
+            },
     }
 
     bound = 0.114
     computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs, sample_cvr)
 
     assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(computed, bound)
+    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(computed)
+    assert not finished, 'Audit shouldn\'t have finished but did!'
 
 
-    sample_cvr[1]['Contest D'] = {
-        'winner': 0,
-        'loser': 1
+    sample_cvr[1] = {
+            'Contest A': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest B': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest C': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest D': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest E': {
+                'winner': 0,
+                'loser': 1
+            },
     }
 
-    sample_cvr[2]['Contest D'] = {
-        'winner': 0,
-        'loser': 1
+    sample_cvr[2] = {
+            'Contest A': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest B': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest C': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest D': {
+                'winner': 0,
+                'loser': 1
+            },
+            'Contest E': {
+                'winner': 0,
+                'loser': 1
+            },
     }
 
-    bound = 0.114
+    bound = 1 
     computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs, sample_cvr)
 
     assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(computed, bound)
+    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(computed)
+    assert not finished, 'Audit shouldn\'t have finished but did!'

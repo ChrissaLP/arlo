@@ -163,7 +163,8 @@ class SuperSimple(RiskLimitingAudit):
                         if e > e_r:
                             e_r = e
 
-            p *= (1 - 1/U)/(1 - (e_r/(2*self.gamma*V)))
+            p_b = (1 - 1/U)/(1 - (e_r/((2*self.gamma)/V)))
+            p *= p_b
 
             if p < lowest_p:
                 lowest_p = p
