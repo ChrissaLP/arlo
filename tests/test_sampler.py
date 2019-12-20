@@ -74,6 +74,12 @@ def macro_contest():
 
     yield Contest(name, info_dict)
 
+def test_supersimple_error():
+    with pytest.raises(Exception) as e:
+        Sampler('SuperSimple', 0, 0, {})
+        
+        assert 'Must have cast-vote records to use SuperSimple' in e.value
+
 def test_draw_sample(bravo_sampler):
     # Test getting a sample
     manifest = {
