@@ -101,8 +101,14 @@ def test_compute_diluted_margin(sampler):
 
 def test_get_sample_sizes(sampler):
 
-    computed = sampler.get_sample_sizes(None)
-    expected = 761  # From Stark, though his paper has rounding errors so we add 1.
+    computed = sampler.get_sample_sizes({
+                            'sample_size': 0,
+                            '1-under': 0,
+                            '1-over': 0,
+                            '2-under': 0,
+                            '2-over': 0
+                        })
+    expected = 252  # From Stark's tool 
 
     assert computed == expected, 'Sample size computation incorrect: got {}, expected {}'.format(
         computed, expected)
@@ -110,7 +116,7 @@ def test_get_sample_sizes(sampler):
 
 def test_compute_risk(sampler):
     sample_cvr = {}
-    for i in range(500):
+    for i in range(252):
         sample_cvr[i] = {
             'Contest A': {
                 'winner': 1,
@@ -137,14 +143,17 @@ def test_compute_risk(sampler):
     computed, finished = sampler.audit.compute_risk(sampler.contests,
                                                     sampler.margins,
                                                     sampler.cvrs, sample_cvr)
-    bound = 0.01
-    delta = 0.0005  # Stark's math was roughly rounded? So deal with it
-
-    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(
-        computed, bound)
-    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(
-        computed)
     assert finished, 'Audit should have finished but didn\'t'
+
+    to_sample = sampler.get_sample_sizes({
+                            'sample_size': 252,
+                            '1-under': 0,
+                            '1-over': 0,
+                            '2-under': 0,
+                            '2-over': 0
+                        })
+
+    assert to_sample == 239, 'Number of ballots left to sample is not correct!'
 
     # Test one-vote overstatement
     sample_cvr[0] = {
@@ -170,15 +179,21 @@ def test_compute_risk(sampler):
         },
     }
 
-    bound = 0.019
     computed, finished = sampler.audit.compute_risk(sampler.contests,
                                                     sampler.margins,
                                                     sampler.cvrs, sample_cvr)
-    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(
-        computed, bound)
-    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(
-        computed)
-    assert finished, 'Audit should have finished but didn\'t'
+
+    assert not finished, 'Audit shouldn\'t have finished but did'
+
+    to_sample = sampler.get_sample_sizes({
+                            'sample_size': 252,
+                            '1-under': 0,
+                            '1-over': 1,
+                            '2-under': 0,
+                            '2-over': 0
+                        })
+
+    assert to_sample == 326, 'Number of ballots left to sample is not correct!'
 
     # Test two-vote overstatement
     sample_cvr[0] = {
@@ -204,70 +219,20 @@ def test_compute_risk(sampler):
         },
     }
 
-    bound = 0.114
     computed, finished = sampler.audit.compute_risk(sampler.contests,
                                                     sampler.margins,
                                                     sampler.cvrs, sample_cvr)
 
-    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(
-        computed, bound)
-    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(
-        computed)
     assert not finished, 'Audit shouldn\'t have finished but did!'
 
-    sample_cvr[1] = {
-        'Contest A': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest B': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest C': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest D': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest E': {
-            'winner': 0,
-            'loser': 1
-        },
-    }
 
-    sample_cvr[2] = {
-        'Contest A': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest B': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest C': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest D': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest E': {
-            'winner': 0,
-            'loser': 1
-        },
-    }
+    to_sample = sampler.get_sample_sizes({
+                            'sample_size': 252,
+                            '1-under': 0,
+                            '1-over': 0,
+                            '2-under': 0,
+                            '2-over': 1
+                        })
 
-    bound = 1
-    computed, finished = sampler.audit.compute_risk(sampler.contests,
-                                                    sampler.margins,
-                                                    sampler.cvrs, sample_cvr)
+    assert to_sample == 100000, 'Number of ballots left to sample is not correct!'
 
-    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(
-        computed, bound)
-    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(
-        computed)
-    assert not finished, 'Audit shouldn\'t have finished but did!'
