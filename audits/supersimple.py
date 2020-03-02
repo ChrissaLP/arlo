@@ -6,8 +6,7 @@ from audits.audit import RiskLimitingAudit
 class SuperSimple(RiskLimitingAudit):
     def __init__(self, risk_limit):
         self.l = 0.5
-        self.gamma = 1.03905 # This gamma is used in Stark's tool, AGI, and CORLA 
-
+        self.gamma = 1.03905  # This gamma is used in Stark's tool, AGI, and CORLA
 
         # This sets the expected number of one-vote misstatements at 1 in 1000
         self.o1 = 0.001
@@ -70,16 +69,14 @@ class SuperSimple(RiskLimitingAudit):
         for contest in contests:
             for winner in margins[contest]['winners']:
                 for loser in margins[contest]['losers']:
-                    margin = contests[contest][winner] - contests[contest][
-                        loser]
+                    margin = contests[contest][winner] - contests[contest][loser]
 
                     if margin < closest_margin:
                         closest_margin = margin
 
         return closest_margin / total_ballots
 
-    def get_sample_sizes(self, contests, margins, total_ballots,
-                         reported_results, sample_results):
+    def get_sample_sizes(self, contests, margins, total_ballots, reported_results, sample_results):
         """
         Computes initial sample sizes parameterized by likelihood that the
         initial sample will confirm the election result, assuming no
@@ -109,9 +106,7 @@ class SuperSimple(RiskLimitingAudit):
                     }
         """
 
-
-        diluted_margin = self.compute_diluted_margin(contests, margins,
-                                                     total_ballots)
+        diluted_margin = self.compute_diluted_margin(contests, margins, total_ballots)
 
         obs_o1 = sample_results['1-over']
         obs_u1 = sample_results['1-under']
@@ -120,10 +115,10 @@ class SuperSimple(RiskLimitingAudit):
         num_sampled = sample_results['sample_size']
 
         if num_sampled:
-            r1 = obs_o1/num_sampled
-            r2 = obs_o2/num_sampled
-            s1 = obs_u1/num_sampled
-            s2 = obs_u2/num_sampled
+            r1 = obs_o1 / num_sampled
+            r2 = obs_o2 / num_sampled
+            s1 = obs_u1 / num_sampled
+            s2 = obs_u2 / num_sampled
         else:
             r1 = self.o1
             r2 = self.o2
@@ -135,12 +130,12 @@ class SuperSimple(RiskLimitingAudit):
                 r1*math.log(1 - 1/(2*self.gamma)) -     \
                 r2*math.log(1 - 1/self.gamma) -         \
                 s1*math.log(1 + 1/(2*self.gamma)) -     \
-                s2*math.log(1 + 1/self.gamma)      
+                s2*math.log(1 + 1/self.gamma)
 
         if denom >= 0:
             return total_ballots
 
-        return math.ceil(math.log(self.risk_limit)/denom)
+        return math.ceil(math.log(self.risk_limit) / denom)
 
     def compute_risk(self, contests, margins, cvrs, sample_cvr):
         """
@@ -179,8 +174,7 @@ class SuperSimple(RiskLimitingAudit):
 
         p = 1
 
-        diluted_margin = self.compute_diluted_margin(contests, margins,
-                                                     len(cvrs))
+        diluted_margin = self.compute_diluted_margin(contests, margins, len(cvrs))
         V = diluted_margin * len(cvrs)
 
         U = 2 * self.gamma / diluted_margin
@@ -200,8 +194,7 @@ class SuperSimple(RiskLimitingAudit):
                         v_l = cvrs[ballot][contest][loser]
                         a_l = sample_cvr[ballot][contest][loser]
 
-                        V_wl = contests[contest][winner] - contests[contest][
-                            loser]
+                        V_wl = contests[contest][winner] - contests[contest][loser]
 
                         e = ((v_w - a_w) - (v_l - a_l)) / V_wl
                         if e > e_r:

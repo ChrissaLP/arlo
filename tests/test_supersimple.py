@@ -91,8 +91,7 @@ def sampler():
 
 def test_compute_diluted_margin(sampler):
 
-    computed = sampler.audit.compute_diluted_margin(sampler.contests,
-                                                    sampler.margins, 100000)
+    computed = sampler.audit.compute_diluted_margin(sampler.contests, sampler.margins, 100000)
     expected = 0.02
 
     assert computed == expected, 'Diluted margin computation incorrect: got {}, expected {}'.format(
@@ -102,13 +101,13 @@ def test_compute_diluted_margin(sampler):
 def test_get_sample_sizes(sampler):
 
     computed = sampler.get_sample_sizes({
-                            'sample_size': 0,
-                            '1-under': 0,
-                            '1-over': 0,
-                            '2-under': 0,
-                            '2-over': 0
-                        })
-    expected = 252  # From Stark's tool 
+        'sample_size': 0,
+        '1-under': 0,
+        '1-over': 0,
+        '2-under': 0,
+        '2-over': 0
+    })
+    expected = 252  # From Stark's tool
 
     assert computed == expected, 'Sample size computation incorrect: got {}, expected {}'.format(
         computed, expected)
@@ -140,18 +139,17 @@ def test_compute_risk(sampler):
             },
         }
 
-    computed, finished = sampler.audit.compute_risk(sampler.contests,
-                                                    sampler.margins,
-                                                    sampler.cvrs, sample_cvr)
+    computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs,
+                                                    sample_cvr)
     assert finished, 'Audit should have finished but didn\'t'
 
     to_sample = sampler.get_sample_sizes({
-                            'sample_size': 252,
-                            '1-under': 0,
-                            '1-over': 0,
-                            '2-under': 0,
-                            '2-over': 0
-                        })
+        'sample_size': 252,
+        '1-under': 0,
+        '1-over': 0,
+        '2-under': 0,
+        '2-over': 0
+    })
 
     assert to_sample == 239, 'Number of ballots left to sample is not correct!'
 
@@ -179,19 +177,18 @@ def test_compute_risk(sampler):
         },
     }
 
-    computed, finished = sampler.audit.compute_risk(sampler.contests,
-                                                    sampler.margins,
-                                                    sampler.cvrs, sample_cvr)
+    computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs,
+                                                    sample_cvr)
 
     assert not finished, 'Audit shouldn\'t have finished but did'
 
     to_sample = sampler.get_sample_sizes({
-                            'sample_size': 252,
-                            '1-under': 0,
-                            '1-over': 1,
-                            '2-under': 0,
-                            '2-over': 0
-                        })
+        'sample_size': 252,
+        '1-under': 0,
+        '1-over': 1,
+        '2-under': 0,
+        '2-over': 0
+    })
 
     assert to_sample == 326, 'Number of ballots left to sample is not correct!'
 
@@ -219,20 +216,17 @@ def test_compute_risk(sampler):
         },
     }
 
-    computed, finished = sampler.audit.compute_risk(sampler.contests,
-                                                    sampler.margins,
-                                                    sampler.cvrs, sample_cvr)
+    computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs,
+                                                    sample_cvr)
 
     assert not finished, 'Audit shouldn\'t have finished but did!'
 
-
     to_sample = sampler.get_sample_sizes({
-                            'sample_size': 252,
-                            '1-under': 0,
-                            '1-over': 0,
-                            '2-under': 0,
-                            '2-over': 1
-                        })
+        'sample_size': 252,
+        '1-under': 0,
+        '1-over': 0,
+        '2-under': 0,
+        '2-over': 1
+    })
 
     assert to_sample == 100000, 'Number of ballots left to sample is not correct!'
-
