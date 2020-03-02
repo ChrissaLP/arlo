@@ -4,6 +4,7 @@ import numpy as np
 
 from sampler import Sampler
 
+
 @pytest.fixture
 def sampler():
     seed = '12345678901234567890abcdefghijklmnopqrstuvwxyz😊'
@@ -42,7 +43,6 @@ def sampler():
         }
     }
 
-
     cvr = {}
     for i in range(100000):
         contest_a_res = None
@@ -51,60 +51,30 @@ def sampler():
         contest_d_res = None
         contest_e_res = None
 
-
         if i < 60000:
-            contest_a_res = {
-                'winner': 1,
-                'loser': 0
-            }
-        else: 
-            contest_a_res = {
-                'winner': 0,
-                'loser': 1
-            }
+            contest_a_res = {'winner': 1, 'loser': 0}
+        else:
+            contest_a_res = {'winner': 0, 'loser': 1}
 
         if i < 30000:
-            contest_b_res = {
-                'winner': 1,
-                'loser': 0
-            }
+            contest_b_res = {'winner': 1, 'loser': 0}
         elif i > 30000 and i < 60000:
-            contest_b_res = {
-                'winner': 0,
-                'loser': 1
-            }
-             
+            contest_b_res = {'winner': 0, 'loser': 1}
+
         if i < 18000:
-            contest_c_res = {
-                'winner': 1,
-                'loser': 0
-            }
+            contest_c_res = {'winner': 1, 'loser': 0}
         elif i > 18000 and i < 30600:
-            contest_c_res = {
-                'winner': 0,
-                'loser': 1
-            }
+            contest_c_res = {'winner': 0, 'loser': 1}
 
         if i < 8000:
-            contest_d_res = {
-                'winner': 1,
-                'loser': 0
-            }
+            contest_d_res = {'winner': 1, 'loser': 0}
         elif i > 8000 and i < 14000:
-            contest_d_res = {
-                'winner': 0,
-                'loser': 1
-            }
+            contest_d_res = {'winner': 0, 'loser': 1}
 
         if i < 10000:
-            contest_e_res = {
-                'winner': 1,
-                'loser': 0
-            }
+            contest_e_res = {'winner': 1, 'loser': 0}
 
-        cvr[i] = {
-                'Contest A': contest_a_res
-        }
+        cvr[i] = {'Contest A': contest_a_res}
 
         if contest_b_res:
             cvr[i]['Contest B'] = contest_b_res
@@ -116,23 +86,27 @@ def sampler():
         if contest_e_res:
             cvr[i]['Contest E'] = contest_e_res
 
-
     yield Sampler('SuperSimple', seed, risk_limit, contests, cvrs=cvr)
 
 
 def test_compute_diluted_margin(sampler):
 
-    computed = sampler.audit.compute_diluted_margin(sampler.contests, sampler.margins, 100000)
+    computed = sampler.audit.compute_diluted_margin(sampler.contests,
+                                                    sampler.margins, 100000)
     expected = 0.02
 
-    assert computed == expected, 'Diluted margin computation incorrect: got {}, expected {}'.format(computed, expected)
+    assert computed == expected, 'Diluted margin computation incorrect: got {}, expected {}'.format(
+        computed, expected)
+
 
 def test_get_sample_sizes(sampler):
 
     computed = sampler.get_sample_sizes(None)
-    expected = 761 # From Stark, though his paper has rounding errors so we add 1. 
+    expected = 761  # From Stark, though his paper has rounding errors so we add 1.
 
-    assert computed == expected, 'Sample size computation incorrect: got {}, expected {}'.format(computed, expected)
+    assert computed == expected, 'Sample size computation incorrect: got {}, expected {}'.format(
+        computed, expected)
+
 
 def test_compute_risk(sampler):
     sample_cvr = {}
@@ -160,125 +134,140 @@ def test_compute_risk(sampler):
             },
         }
 
-    computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs, sample_cvr)
-    bound  = 0.01
-    delta = 0.0005 # Stark's math was roughly rounded? So deal with it
+    computed, finished = sampler.audit.compute_risk(sampler.contests,
+                                                    sampler.margins,
+                                                    sampler.cvrs, sample_cvr)
+    bound = 0.01
+    delta = 0.0005  # Stark's math was roughly rounded? So deal with it
 
-    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(computed, bound)
-    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(computed)
+    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(
+        computed, bound)
+    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(
+        computed)
     assert finished, 'Audit should have finished but didn\'t'
 
-    # Test one-vote overstatement 
+    # Test one-vote overstatement
     sample_cvr[0] = {
-            'Contest A': {
-                'winner': 0,
-                'loser': 0
-            },
-            'Contest B': {
-                'winner': 0,
-                'loser': 0
-            },
-            'Contest C': {
-                'winner': 0,
-                'loser': 0
-            },
-            'Contest D': {
-                'winner': 0,
-                'loser': 0
-            },
-            'Contest E': {
-                'winner': 0,
-                'loser': 0
-            },
+        'Contest A': {
+            'winner': 0,
+            'loser': 0
+        },
+        'Contest B': {
+            'winner': 0,
+            'loser': 0
+        },
+        'Contest C': {
+            'winner': 0,
+            'loser': 0
+        },
+        'Contest D': {
+            'winner': 0,
+            'loser': 0
+        },
+        'Contest E': {
+            'winner': 0,
+            'loser': 0
+        },
     }
 
     bound = 0.019
-    computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs, sample_cvr)
-    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(computed, bound)
-    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(computed)
+    computed, finished = sampler.audit.compute_risk(sampler.contests,
+                                                    sampler.margins,
+                                                    sampler.cvrs, sample_cvr)
+    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(
+        computed, bound)
+    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(
+        computed)
     assert finished, 'Audit should have finished but didn\'t'
-    
-    # Test two-vote overstatement 
+
+    # Test two-vote overstatement
     sample_cvr[0] = {
-            'Contest A': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest B': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest C': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest D': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest E': {
-                'winner': 0,
-                'loser': 1
-            },
+        'Contest A': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest B': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest C': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest D': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest E': {
+            'winner': 0,
+            'loser': 1
+        },
     }
 
     bound = 0.114
-    computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs, sample_cvr)
+    computed, finished = sampler.audit.compute_risk(sampler.contests,
+                                                    sampler.margins,
+                                                    sampler.cvrs, sample_cvr)
 
-    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(computed, bound)
-    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(computed)
+    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(
+        computed, bound)
+    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(
+        computed)
     assert not finished, 'Audit shouldn\'t have finished but did!'
 
-
     sample_cvr[1] = {
-            'Contest A': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest B': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest C': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest D': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest E': {
-                'winner': 0,
-                'loser': 1
-            },
+        'Contest A': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest B': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest C': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest D': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest E': {
+            'winner': 0,
+            'loser': 1
+        },
     }
 
     sample_cvr[2] = {
-            'Contest A': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest B': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest C': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest D': {
-                'winner': 0,
-                'loser': 1
-            },
-            'Contest E': {
-                'winner': 0,
-                'loser': 1
-            },
+        'Contest A': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest B': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest C': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest D': {
+            'winner': 0,
+            'loser': 1
+        },
+        'Contest E': {
+            'winner': 0,
+            'loser': 1
+        },
     }
 
-    bound = 1 
-    computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs, sample_cvr)
+    bound = 1
+    computed, finished = sampler.audit.compute_risk(sampler.contests,
+                                                    sampler.margins,
+                                                    sampler.cvrs, sample_cvr)
 
-    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(computed, bound)
-    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(computed)
+    assert computed <= bound + delta, 'Computed risk {} is above the bound {}!'.format(
+        computed, bound)
+    assert computed > bound - delta, 'Computed risk {} is unexpectedly low!'.format(
+        computed)
     assert not finished, 'Audit shouldn\'t have finished but did!'

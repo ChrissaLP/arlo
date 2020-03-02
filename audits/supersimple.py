@@ -2,13 +2,12 @@ import math
 from scipy import stats
 from audits.audit import RiskLimitingAudit
 
-class SuperSimple(RiskLimitingAudit):
 
+class SuperSimple(RiskLimitingAudit):
     def __init__(self, risk_limit):
         self.l = 0.5
         self.gamma = 1.1
         super().__init__(risk_limit)
-
 
     def compute_diluted_margin(self, contests, margins, total_ballots):
         """
@@ -61,14 +60,16 @@ class SuperSimple(RiskLimitingAudit):
         for contest in contests:
             for winner in margins[contest]['winners']:
                 for loser in margins[contest]['losers']:
-                    margin = contests[contest][winner] - contests[contest][loser]
-                    
+                    margin = contests[contest][winner] - contests[contest][
+                        loser]
+
                     if margin < closest_margin:
                         closest_margin = margin
 
-        return closest_margin/total_ballots
+        return closest_margin / total_ballots
 
-    def get_sample_sizes(self, contests, margins, total_ballots, reported_results, sample_results):
+    def get_sample_sizes(self, contests, margins, total_ballots,
+                         reported_results, sample_results):
         """
         Computes initial sample sizes parameterized by likelihood that the
         initial sample will confirm the election result, assuming no
@@ -91,11 +92,14 @@ class SuperSimple(RiskLimitingAudit):
                     }
         """
 
-        rho = -math.log(self.risk_limit)/((1/(2*self.gamma)) + self.l*math.log(1 - 1/(2*self.gamma))) 
+        rho = -math.log(self.risk_limit) / (
+            (1 / (2 * self.gamma)) + self.l * math.log(1 - 1 /
+                                                       (2 * self.gamma)))
 
-        diluted_margin = self.compute_diluted_margin(contests, margins, total_ballots)
+        diluted_margin = self.compute_diluted_margin(contests, margins,
+                                                     total_ballots)
 
-        return math.ceil(rho/diluted_margin) 
+        return math.ceil(rho / diluted_margin)
 
     def compute_risk(self, contests, margins, cvrs, sample_cvr):
         """
@@ -131,14 +135,14 @@ class SuperSimple(RiskLimitingAudit):
                               result is correct based on the sample, for each winner-loser pair. 
             confirmed       - a boolean indicating whether the audit can stop
         """
-        
+
         p = 1
 
+        diluted_margin = self.compute_diluted_margin(contests, margins,
+                                                     len(cvrs))
+        V = diluted_margin * len(cvrs)
 
-        diluted_margin = self.compute_diluted_margin(contests, margins, len(cvrs))
-        V = diluted_margin*len(cvrs)
-
-        U = 2*self.gamma/diluted_margin
+        U = 2 * self.gamma / diluted_margin
 
         lowest_p = 1
         result = False
@@ -157,13 +161,14 @@ class SuperSimple(RiskLimitingAudit):
                         v_l = cvrs[ballot][contest][loser]
                         a_l = sample_cvr[ballot][contest][loser]
 
-                        V_wl = contests[contest][winner] - contests[contest][loser]
+                        V_wl = contests[contest][winner] - contests[contest][
+                            loser]
 
-                        e = ((v_w - a_w) - (v_l - a_l))/V_wl
+                        e = ((v_w - a_w) - (v_l - a_l)) / V_wl
                         if e > e_r:
                             e_r = e
 
-            p_b = (1 - 1/U)/(1 - (e_r/((2*self.gamma)/V)))
+            p_b = (1 - 1 / U) / (1 - (e_r / ((2 * self.gamma) / V)))
             p *= p_b
 
             if p < lowest_p:
@@ -172,4 +177,4 @@ class SuperSimple(RiskLimitingAudit):
             if p < self.risk_limit:
                 result = True
 
-        return lowest_p, result 
+        return lowest_p, result
