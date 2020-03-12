@@ -2,7 +2,7 @@ import pytest
 import math
 import numpy as np
 
-from util.contest import Contest
+from audits.sampler_contest import Contest
 import audits.supersimple
 
 seed = "12345678901234567890abcdefghijklmnopqrstuvwxyz😊"

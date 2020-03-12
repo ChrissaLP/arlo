@@ -2,7 +2,7 @@ import pytest
 import math
 import numpy as np
 
-from audits import bravo, sampler
+from audits import bravo
 from audits.sampler_contest import Contest
 
 seed = "12345678901234567890abcdefghijklmnopqrstuvwxyz😊"

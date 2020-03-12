@@ -1,8 +1,7 @@
 import math
 from scipy import stats
 
-from util.contest import Contest
-
+from .sampler_contest import Contest
 
 l = 0.5
 gamma = 1.03905  # This gamma is used in Stark's tool, AGI, and CORLA
