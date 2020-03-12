@@ -35,6 +35,7 @@ class Contest:
     winners: List[str]  # List of all the winners
     losers: List[str]  # List of all the losers
 
+    diluted_margin: int  # The smallest margin in this contest as a fraction of total ballots
     margins: Dict[str, Dict]  # Dict of the margins for this contest
 
     def __init__(self, name, contest_info_dict):
@@ -103,30 +104,50 @@ class Contest:
             reverse=True,
         )
 
-        self.winners = cand_vec[: self.numWinners]
-        self.losers = cand_vec[self.numWinners :]
+        self.winners = {}
+        self.losers = {}
 
-        v_wl = sum([c[1] for c in self.winners + self.losers])
+        v_wl = 0
+
+        for i, c in enumerate(cand_vec):
+            v_wl += c[1]
+            if i < self.numWinners:
+                self.winners[c[0]] = c[1]
+
+            else:
+                self.losers[c[0]] = c[1]
 
         for loser in self.losers:
-            self.margins["losers"][loser[0]] = {
-                "p_l": loser[1] / self.ballots,
-                "s_l": loser[1] / v_wl,
+            self.margins["losers"][loser] = {
+                "p_l": self.losers[loser] / self.ballots,
+                "s_l": self.losers[loser] / v_wl,
             }
 
+        min_margin = self.ballots
+
         for winner in self.winners:
-            s_w = winner[1] / v_wl
+            s_w = self.winners[winner] / v_wl
 
             swl = {}
-            for loser in self.margins["losers"]:
+            for loser in self.losers:
                 s_l = self.margins["losers"][loser]["s_l"]
                 swl[loser] = s_w / (s_w + s_l)
 
-            self.margins["winners"][winner[0]] = {
-                "p_w": winner[1] / self.ballots,
+                # Find the smallest margin, in ballots
+                if self.winners[winner] - self.losers[loser] < min_margin:
+                    min_margin = self.winners[winner] - self.losers[loser]
+
+            self.margins["winners"][winner] = {
+                "p_w": self.winners[winner] / self.ballots,
                 "s_w": s_w,
                 "swl": swl,
             }
+
+        if self.losers:
+            print(self.name, self.losers)
+            self.diluted_margin = float(min_margin) / self.ballots
+        else:
+            self.diluted_margin = -1
 
     def __repr__(self):
         return "Contest({}): numWinners: {}, votesAllowed: {}, total ballots: {}, candidates: {}".format(

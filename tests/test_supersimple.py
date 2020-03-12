@@ -2,47 +2,15 @@ import pytest
 import math
 import numpy as np
 
-from sampler import Sampler
+from util.contest import Contest
+import audits.supersimple
+
+seed = "12345678901234567890abcdefghijklmnopqrstuvwxyz😊"
+risk_limit = 0.1
 
 
 @pytest.fixture
-def sampler():
-    seed = '12345678901234567890abcdefghijklmnopqrstuvwxyz😊'
-
-    risk_limit = .1
-    contests = {
-        'Contest A': {
-            'winner': 60000,
-            'loser': 40000,
-            'ballots': 100000,
-            'numWinners': 1,
-        },
-        'Contest B': {
-            'winner': 30000,
-            'loser': 24000,
-            'ballots': 60000,
-            'numWinners': 1,
-        },
-        'Contest C': {
-            'winner': 18000,
-            'loser': 12600,
-            'ballots': 36000,
-            'numWinners': 1,
-        },
-        'Contest D': {
-            'winner': 8000,
-            'loser': 6000,
-            'ballots': 15000,
-            'numWinners': 1
-        },
-        'Contest E': {
-            'winner': 10000,
-            'loser': 0,
-            'ballots': 10000,
-            'numWinners': 1
-        }
-    }
-
+def cvrs():
     cvr = {}
     for i in range(100000):
         contest_a_res = None
@@ -52,181 +20,266 @@ def sampler():
         contest_e_res = None
 
         if i < 60000:
-            contest_a_res = {'winner': 1, 'loser': 0}
+            contest_a_res = {"winner": 1, "loser": 0}
         else:
-            contest_a_res = {'winner': 0, 'loser': 1}
+            contest_a_res = {"winner": 0, "loser": 1}
 
         if i < 30000:
-            contest_b_res = {'winner': 1, 'loser': 0}
+            contest_b_res = {"winner": 1, "loser": 0}
         elif i > 30000 and i < 60000:
-            contest_b_res = {'winner': 0, 'loser': 1}
+            contest_b_res = {"winner": 0, "loser": 1}
 
         if i < 18000:
-            contest_c_res = {'winner': 1, 'loser': 0}
+            contest_c_res = {"winner": 1, "loser": 0}
         elif i > 18000 and i < 30600:
-            contest_c_res = {'winner': 0, 'loser': 1}
+            contest_c_res = {"winner": 0, "loser": 1}
 
         if i < 8000:
-            contest_d_res = {'winner': 1, 'loser': 0}
+            contest_d_res = {"winner": 1, "loser": 0}
         elif i > 8000 and i < 14000:
-            contest_d_res = {'winner': 0, 'loser': 1}
+            contest_d_res = {"winner": 0, "loser": 1}
 
         if i < 10000:
-            contest_e_res = {'winner': 1, 'loser': 0}
+            contest_e_res = {"winner": 1, "loser": 0}
 
-        cvr[i] = {'Contest A': contest_a_res}
+        cvr[i] = {"Contest A": contest_a_res}
 
         if contest_b_res:
-            cvr[i]['Contest B'] = contest_b_res
+            cvr[i]["Contest B"] = contest_b_res
 
         if contest_c_res:
-            cvr[i]['Contest C'] = contest_c_res
+            cvr[i]["Contest C"] = contest_c_res
         if contest_d_res:
-            cvr[i]['Contest D'] = contest_d_res
+            cvr[i]["Contest D"] = contest_d_res
         if contest_e_res:
-            cvr[i]['Contest E'] = contest_e_res
-
-    yield Sampler('SuperSimple', seed, risk_limit, contests, cvrs=cvr)
-
-
-def test_compute_diluted_margin(sampler):
-
-    computed = sampler.audit.compute_diluted_margin(sampler.contests, sampler.margins, 100000)
-    expected = 0.02
-
-    assert computed == expected, 'Diluted margin computation incorrect: got {}, expected {}'.format(
-        computed, expected)
+            cvr[i]["Contest E"] = contest_e_res
+    yield cvr
 
 
-def test_get_sample_sizes(sampler):
+@pytest.fixture
+def contests():
+    contests = {}
 
-    computed = sampler.get_sample_sizes({
-        'sample_size': 0,
-        '1-under': 0,
-        '1-over': 0,
-        '2-under': 0,
-        '2-over': 0
-    })
-    expected = 252  # From Stark's tool
+    for contest in ss_contests:
+        contests[contest] = Contest(contest, ss_contests[contest])
 
-    assert computed == expected, 'Sample size computation incorrect: got {}, expected {}'.format(
-        computed, expected)
+    yield contests
 
 
-def test_compute_risk(sampler):
-    sample_cvr = {}
-    for i in range(252):
-        sample_cvr[i] = {
-            'Contest A': {
-                'winner': 1,
-                'loser': 0
-            },
-            'Contest B': {
-                'winner': 1,
-                'loser': 0
-            },
-            'Contest C': {
-                'winner': 1,
-                'loser': 0
-            },
-            'Contest D': {
-                'winner': 1,
-                'loser': 0
-            },
-            'Contest E': {
-                'winner': 1,
-                'loser': 0
-            },
+def test_compute_diluted_margin(contests):
+    for contest, expected in true_dms.items():
+        computed = contests[contest].diluted_margin
+        assert (
+            computed == expected
+        ), "Diluted margin computation incorrect: got {}, expected {} in contest {}".format(
+            computed, expected, contest
+        )
+
+
+def test_get_sample_sizes(contests):
+    sample_results = {
+        "sample_size": 0,
+        "1-under": 0,
+        "1-over": 0,
+        "2-under": 0,
+        "2-over": 0,
+    }
+
+    for contest in contests:
+        computed = audits.supersimple.get_sample_sizes(
+            risk_limit, contests[contest], sample_results
+        )
+        expected = true_sample_sizes[contest]  # From Stark's tool
+
+        assert (
+            computed == expected
+        ), "Sample size computation incorrect: got {}, expected {} in contest {}".format(
+            computed, expected, contest
+        )
+
+
+def test_compute_risk(contests, cvrs):
+
+    for contest in contests:
+        to_sample = {
+            "sample_size": 0,
+            "1-under": 0,
+            "1-over": 0,
+            "2-under": 0,
+            "2-over": 0,
+        }
+        sample_cvr = {}
+        sample_size = audits.supersimple.get_sample_sizes(
+            risk_limit, contests[contest], to_sample
+        )
+
+        for i in range(sample_size):
+            sample_cvr[i] = {
+                "Contest A": {"winner": 1, "loser": 0},
+                "Contest B": {"winner": 1, "loser": 0},
+                "Contest C": {"winner": 1, "loser": 0},
+                "Contest D": {"winner": 1, "loser": 0},
+                "Contest E": {"winner": 1, "loser": 0},
+            }
+
+        computed, finished = audits.supersimple.compute_risk(
+            risk_limit, contests[contest], cvrs, sample_cvr
+        )
+
+        assert finished, "Audit should have finished but didn't"
+
+        to_sample = {
+            "sample_size": sample_size,
+            "1-under": 0,
+            "1-over": 0,
+            "2-under": 0,
+            "2-over": 0,
         }
 
-    computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs,
-                                                    sample_cvr)
-    assert finished, 'Audit should have finished but didn\'t'
+        next_sample_size = audits.supersimple.get_sample_sizes(
+            risk_limit, contests[contest], to_sample
+        )
+        assert (
+            next_sample_size == no_next_sample[contest]
+        ), "Number of ballots left to sample is not correct!"
 
-    to_sample = sampler.get_sample_sizes({
-        'sample_size': 252,
-        '1-under': 0,
-        '1-over': 0,
-        '2-under': 0,
-        '2-over': 0
-    })
+        # Test one-vote overstatement
+        sample_cvr[0] = {
+            "Contest A": {"winner": 0, "loser": 0},
+            "Contest B": {"winner": 0, "loser": 0},
+            "Contest C": {"winner": 0, "loser": 0},
+            "Contest D": {"winner": 0, "loser": 0},
+            "Contest E": {"winner": 0, "loser": 0},
+        }
 
-    assert to_sample == 239, 'Number of ballots left to sample is not correct!'
+        computed, finished = audits.supersimple.compute_risk(
+            risk_limit, contests[contest], cvrs, sample_cvr
+        )
+        assert not finished, "Audit shouldn't have finished but did!"
 
-    # Test one-vote overstatement
-    sample_cvr[0] = {
-        'Contest A': {
-            'winner': 0,
-            'loser': 0
-        },
-        'Contest B': {
-            'winner': 0,
-            'loser': 0
-        },
-        'Contest C': {
-            'winner': 0,
-            'loser': 0
-        },
-        'Contest D': {
-            'winner': 0,
-            'loser': 0
-        },
-        'Contest E': {
-            'winner': 0,
-            'loser': 0
-        },
-    }
+        to_sample = {
+            "sample_size": sample_size,
+            "1-under": 0,
+            "1-over": 1,
+            "2-under": 0,
+            "2-over": 0,
+        }
 
-    computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs,
-                                                    sample_cvr)
+        next_sample_size = audits.supersimple.get_sample_sizes(
+            risk_limit, contests[contest], to_sample
+        )
+        assert (
+            next_sample_size == o1_next_sample[contest]
+        ), "Number of ballots left to sample is not correct in contest {}!".format(
+            contest
+        )
 
-    assert not finished, 'Audit shouldn\'t have finished but did'
+        # Test two-vote overstatement
+        sample_cvr[0] = {
+            "Contest A": {"winner": 0, "loser": 1},
+            "Contest B": {"winner": 0, "loser": 1},
+            "Contest C": {"winner": 0, "loser": 1},
+            "Contest D": {"winner": 0, "loser": 1},
+            "Contest E": {"winner": 0, "loser": 1},
+        }
 
-    to_sample = sampler.get_sample_sizes({
-        'sample_size': 252,
-        '1-under': 0,
-        '1-over': 1,
-        '2-under': 0,
-        '2-over': 0
-    })
+        computed, finished = audits.supersimple.compute_risk(
+            risk_limit, contests[contest], cvrs, sample_cvr
+        )
+        assert not finished, "Audit shouldn't have finished but did!"
 
-    assert to_sample == 326, 'Number of ballots left to sample is not correct!'
+        to_sample = {
+            "sample_size": sample_size,
+            "1-under": 0,
+            "1-over": 0,
+            "2-under": 0,
+            "2-over": 1,
+        }
 
-    # Test two-vote overstatement
-    sample_cvr[0] = {
-        'Contest A': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest B': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest C': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest D': {
-            'winner': 0,
-            'loser': 1
-        },
-        'Contest E': {
-            'winner': 0,
-            'loser': 1
-        },
-    }
+        next_sample_size = audits.supersimple.get_sample_sizes(
+            risk_limit, contests[contest], to_sample
+        )
+        assert (
+            next_sample_size == o2_next_sample[contest]
+        ), "Number of ballots left to sample is not correct in contest {}!".format(
+            contest
+        )
 
-    computed, finished = sampler.audit.compute_risk(sampler.contests, sampler.margins, sampler.cvrs,
-                                                    sample_cvr)
 
-    assert not finished, 'Audit shouldn\'t have finished but did!'
+true_dms = {
+    "Contest A": 0.2,
+    "Contest B": 0.1,
+    "Contest C": 0.15,
+    "Contest D": 2 / 15,
+    "Contest E": 1,
+}
 
-    to_sample = sampler.get_sample_sizes({
-        'sample_size': 252,
-        '1-under': 0,
-        '1-over': 0,
-        '2-under': 0,
-        '2-over': 1
-    })
+true_sample_sizes = {
+    "Contest A": 27,
+    "Contest B": 54,
+    "Contest C": 36,
+    "Contest D": 40,
+    "Contest E": 6,
+}
 
-    assert to_sample == 100000, 'Number of ballots left to sample is not correct!'
+no_next_sample = {
+    "Contest A": 24,
+    "Contest B": 48,
+    "Contest C": 32,
+    "Contest D": 36,
+    "Contest E": 5,
+}
+
+o1_next_sample = {
+    "Contest A": 38,
+    "Contest B": 76,
+    "Contest C": 51,
+    "Contest D": 57,
+    "Contest E": 7,
+}
+
+o2_next_sample = {
+    "Contest A": 100000,
+    "Contest B": 60000,
+    "Contest C": 36000,
+    "Contest D": 15000,
+    "Contest E": 6,
+}
+
+ss_contests = {
+    "Contest A": {
+        "winner": 60000,
+        "loser": 40000,
+        "ballots": 100000,
+        "numWinners": 1,
+        "votesAllowed": 1,
+    },
+    "Contest B": {
+        "winner": 30000,
+        "loser": 24000,
+        "ballots": 60000,
+        "numWinners": 1,
+        "votesAllowed": 1,
+    },
+    "Contest C": {
+        "winner": 18000,
+        "loser": 12600,
+        "ballots": 36000,
+        "numWinners": 1,
+        "votesAllowed": 1,
+    },
+    "Contest D": {
+        "winner": 8000,
+        "loser": 6000,
+        "ballots": 15000,
+        "numWinners": 1,
+        "votesAllowed": 1,
+    },
+    "Contest E": {
+        "winner": 10000,
+        "loser": 0,
+        "ballots": 10000,
+        "numWinners": 1,
+        "votesAllowed": 1,
+    },
+}
