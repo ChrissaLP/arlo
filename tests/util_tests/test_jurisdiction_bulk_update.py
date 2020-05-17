@@ -11,18 +11,38 @@ import pytest
 import uuid
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def db():
     with arlo_server.app.app_context():
-        arlo_server.db.drop_all()
+        # arlo_server.db.drop_all()
         arlo_server.db.create_all()
 
     yield arlo_server.db
 
-    arlo_server.db.session.rollback()
+    # arlo_server.db.session.rollback()
 
 
-def test_first_update(db):
+@pytest.fixture(scope="function")
+def session(db, request):
+    """Creates a new database session for a test."""
+    connection = db.engine.connect()
+    transaction = connection.begin()
+
+    options = dict(bind=connection, binds={})
+    session = db.create_scoped_session(options=options)
+
+    db.session = session
+
+    def teardown():
+        transaction.rollback()
+        connection.close()
+        session.remove()
+
+    request.addfinalizer(teardown)
+    return session
+
+
+def test_first_update(session):
     org = Organization(id=str(uuid.uuid4()), name="Test Org")
     election = Election(
         id=str(uuid.uuid4()),
@@ -31,9 +51,9 @@ def test_first_update(db):
         is_multi_jurisdiction=True,
     )
     new_admins = bulk_update_jurisdictions(
-        db.session, election, [("Jurisdiction #1", "bob.harris@ca.gov")]
+        session, election, [("Jurisdiction #1", "bob.harris@ca.gov")]
     )
-    db.session.commit()
+    session.commit()
 
     assert [(admin.jurisdiction.name, admin.user.email) for admin in new_admins] == [
         ("Jurisdiction #1", "bob.harris@ca.gov")
@@ -44,7 +64,7 @@ def test_first_update(db):
     assert JurisdictionAdministration.query.count() == 1
 
 
-def test_idempotent(db):
+def test_idempotent(session):
     org = Organization(id=str(uuid.uuid4()), name="Test Org")
     election = Election(
         id=str(uuid.uuid4()),
@@ -55,23 +75,23 @@ def test_idempotent(db):
 
     # Do it once.
     bulk_update_jurisdictions(
-        db.session, election, [("Jurisdiction #1", "bob.harris@ca.gov")]
+        session, election, [("Jurisdiction #1", "bob.harris@ca.gov")]
     )
-    db.session.commit()
+    session.commit()
 
     user = User.query.one()
     jurisdiction = Jurisdiction.query.one()
 
     # Do the same thing again.
     bulk_update_jurisdictions(
-        db.session, election, [("Jurisdiction #1", "bob.harris@ca.gov")]
+        session, election, [("Jurisdiction #1", "bob.harris@ca.gov")]
     )
 
     assert User.query.one() == user
     assert Jurisdiction.query.one() == jurisdiction
 
 
-def test_remove_outdated_jurisdictions(db):
+def test_remove_outdated_jurisdictions(session):
     org = Organization(id=str(uuid.uuid4()), name="Test Org")
     election = Election(
         id=str(uuid.uuid4()),
@@ -82,12 +102,12 @@ def test_remove_outdated_jurisdictions(db):
 
     # Add jurisdictions.
     bulk_update_jurisdictions(
-        db.session, election, [("Jurisdiction #1", "bob.harris@ca.gov")]
+        session, election, [("Jurisdiction #1", "bob.harris@ca.gov")]
     )
-    db.session.commit()
+    session.commit()
 
     # Delete jurisdictions.
-    new_admins = bulk_update_jurisdictions(db.session, election, [])
+    new_admins = bulk_update_jurisdictions(session, election, [])
 
     assert new_admins == []
     assert User.query.count() == 1  # keep the user
