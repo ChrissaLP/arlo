@@ -29,10 +29,12 @@ from arlo_server.models import (
 from arlo_server.audit_boards import end_round
 
 SAMPLE_SIZE_ROUND_1 = 119  # Bravo sample size
+BALLOTS_ROUND_1 = 110
 J1_SAMPLES_ROUND_1 = 81
 J1_BALLOTS_ROUND_1 = 75
 J1_SAMPLES_ROUND_2 = 281  # 90% probability sample size
 J1_BALLOTS_ROUND_2 = 234
+AB1_SAMPLES_ROUND_1 = 54
 AB1_BALLOTS_ROUND_1 = 50
 AB2_BALLOTS_ROUND_1 = 25
 AB1_BALLOTS_ROUND_2 = 151
