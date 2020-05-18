@@ -35,7 +35,9 @@ export interface IJurisdiction {
   ballotManifest: IFileInfo
   currentRoundStatus: {
     status: JurisdictionRoundStatus
-    numBallotsSampled: number
+    numSamples: number
+    numSamplesAudited: number
+    numBallots: number
     numBallotsAudited: number
   } | null
 }

@@ -2,6 +2,7 @@ import React, { useState, useLayoutEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { Table, Column, Cell } from '@blueprintjs/table'
+import { Switch } from '@blueprintjs/core'
 import H2Title from '../../Atoms/H2Title'
 import {
   JurisdictionRoundStatus,
@@ -19,12 +20,18 @@ const PaddedCell = styled(Cell)`
   padding: 5px 5px 4px 5px;
 `
 
+const SwitchWrapper = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`
+
 interface IProps {
   jurisdictions: IJurisdiction[]
 }
 
 const Progress: React.FC<IProps> = ({ jurisdictions }: IProps) => {
   const { electionId } = useParams<{ electionId: string }>()
+  const [isShowingBallots, setIsShowingBallots] = useState<boolean>(true)
   const [
     jurisdictionDetail,
     setJurisdictionDetail,
@@ -73,10 +80,11 @@ const Progress: React.FC<IProps> = ({ jurisdictions }: IProps) => {
       key="audited"
       name="Total Audited"
       cellRenderer={(row: number) => {
-        const { currentRoundStatus } = jurisdictions[row]
+        const { currentRoundStatus: s } = jurisdictions[row]
         return (
           <PaddedCell>
-            {currentRoundStatus && currentRoundStatus.numBallotsAudited}
+            {s &&
+              (isShowingBallots ? s.numBallotsAudited : s.numSamplesAudited)}
           </PaddedCell>
         )
       }}
@@ -85,12 +93,13 @@ const Progress: React.FC<IProps> = ({ jurisdictions }: IProps) => {
       key="remaining"
       name="Remaining in Round"
       cellRenderer={(row: number) => {
-        const { currentRoundStatus } = jurisdictions[row]
+        const { currentRoundStatus: s } = jurisdictions[row]
         return (
           <PaddedCell>
-            {currentRoundStatus &&
-              currentRoundStatus.numBallotsSampled -
-                currentRoundStatus.numBallotsAudited}
+            {s &&
+              (isShowingBallots
+                ? s.numBallots - s.numBallotsAudited
+                : s.numSamples - s.numSamplesAudited)}
           </PaddedCell>
         )
       }}
@@ -111,6 +120,13 @@ const Progress: React.FC<IProps> = ({ jurisdictions }: IProps) => {
   return (
     <Wrapper>
       <H2Title>Audit Progress by Jurisdiction</H2Title>
+      <SwitchWrapper>
+        <Switch
+          checked={isShowingBallots}
+          label="Count unique sampled ballots"
+          onChange={() => setIsShowingBallots(!isShowingBallots)}
+        />
+      </SwitchWrapper>
       <div ref={containerRef}>
         <Table
           numRows={jurisdictions.length}
