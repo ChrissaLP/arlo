@@ -24,13 +24,23 @@ const dummyJurisdictions = {
     {
       id: 'jurisdiction-id-1',
       name: 'Jurisdiction One',
-      ballotManifest: { file: null, processing: null },
+      ballotManifest: {
+        file: null,
+        processing: null,
+        numBatches: null,
+        numBallots: null,
+      },
       currentRoundStatus: null,
     },
     {
       id: 'jurisdiction-id-2',
       name: 'Jurisdiction Two',
-      ballotManifest: { file: null, processing: null },
+      ballotManifest: {
+        file: null,
+        processing: null,
+        numBatches: null,
+        numBallots: null,
+      },
       currentRoundStatus: null,
     },
   ],

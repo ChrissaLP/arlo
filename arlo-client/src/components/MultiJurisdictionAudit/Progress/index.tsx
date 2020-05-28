@@ -46,14 +46,17 @@ const Progress: React.FC<IProps> = ({ jurisdictions }: IProps) => {
       name="Jurisdiction Name"
       cellRenderer={(row: number) => (
         <PaddedCell>
-          <FormButton
-            size="sm"
-            intent="primary"
-            minimal
-            onClick={e => openDetail(e, row)}
-          >
-            {jurisdictions[row].name}
-          </FormButton>
+          {/* Wrap in a fragment to get rid of warning https://github.com/palantir/blueprint/issues/2446 */}
+          <>
+            <FormButton
+              size="sm"
+              intent="primary"
+              minimal
+              onClick={e => openDetail(e, row)}
+            >
+              {jurisdictions[row].name}
+            </FormButton>
+          </>
         </PaddedCell>
       )}
     />,
@@ -124,6 +127,9 @@ const Progress: React.FC<IProps> = ({ jurisdictions }: IProps) => {
         <Switch
           checked={isShowingBallots}
           label="Count unique sampled ballots"
+          disabled={
+            jurisdictions[0] && jurisdictions[0].currentRoundStatus === null
+          }
           onChange={() => setIsShowingBallots(!isShowingBallots)}
         />
       </SwitchWrapper>

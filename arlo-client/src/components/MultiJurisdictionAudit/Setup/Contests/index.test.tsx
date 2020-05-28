@@ -487,13 +487,23 @@ describe('Audit Setup > Contests', () => {
           {
             id: '1',
             name: 'Jurisdiction One',
-            ballotManifest: { file: null, processing: null },
+            ballotManifest: {
+              file: null,
+              processing: null,
+              numBallots: null,
+              numBatches: null,
+            },
             currentRoundStatus: null,
           },
           {
             id: '2',
             name: 'Jurisdiction Two',
-            ballotManifest: { file: null, processing: null },
+            ballotManifest: {
+              file: null,
+              processing: null,
+              numBallots: null,
+              numBatches: null,
+            },
             currentRoundStatus: null,
           },
         ],

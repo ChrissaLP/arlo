@@ -65,6 +65,23 @@ exports[`AA setup flow renders sidebar when authenticated on /progress 1`] = `
         >
           Audit Progress by Jurisdiction
         </h2>
+        <div
+          class="sc-hSdWYo dLBuhP"
+        >
+          <label
+            class="bp3-control bp3-switch bp3-disabled"
+          >
+            <input
+              checked=""
+              disabled=""
+              type="checkbox"
+            />
+            <span
+              class="bp3-control-indicator"
+            />
+            Count unique sampled ballots
+          </label>
+        </div>
         <div>
           <div
             class="bp3-table-container bp3-table-selection-enabled"
@@ -208,8 +225,6 @@ exports[`AA setup flow renders sidebar when authenticated on /progress 1`] = `
                               >
                                 <button
                                   class="bp3-button bp3-minimal bp3-small bp3-intent-primary sc-gzVnrw kdzzfK"
-                                  parentcellheight="30"
-                                  parentcellwidth="150"
                                   type="button"
                                 >
                                   <span
@@ -255,8 +270,6 @@ exports[`AA setup flow renders sidebar when authenticated on /progress 1`] = `
                               >
                                 <button
                                   class="bp3-button bp3-minimal bp3-small bp3-intent-primary sc-gzVnrw kdzzfK"
-                                  parentcellheight="30"
-                                  parentcellwidth="150"
                                   type="button"
                                 >
                                   <span
